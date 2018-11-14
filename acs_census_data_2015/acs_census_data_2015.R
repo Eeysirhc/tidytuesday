@@ -1,0 +1,67 @@
+# Analyzing data for tidytuesday
+# source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-04-30
+
+library(tidyverse)
+library(scales)
+library(RColorBrewer)
+theme_set(theme_bw())
+
+census_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-04-30/week5_acs2015_county_data.csv")
+
+census <- census_raw
+census$State <- as.factor(census$State)
+
+# combined demographics data
+census_demo <- 
+census %>%
+  select(State, TotalPop:Pacific) %>%
+  group_by(State) %>%
+  summarize_all(funs(sum, mean)) %>% # return the sum & mean for each variable
+  select(State, # take the sum for first 3 variables and the mean for everything else
+         TotalPop = TotalPop_sum, 
+         Men = Men_sum, 
+         Women = Women_sum, 
+         Hispanic = Hispanic_mean,
+         White = White_mean, 
+         Black = Black_mean, 
+         Native = Native_mean, 
+         Asian = Asian_mean, 
+         Pacific = Pacific_mean) %>%
+  arrange(desc(TotalPop)) %>%
+  ungroup()
+
+
+# top 20 states for Asians by distribution
+census_demo %>%
+  top_n(20, Asian) %>%
+  ggplot(aes(reorder(State, Asian), Asian)) +
+  geom_bar(stat='identity', aes(fill=State), alpha=0.8) +
+  coord_flip() +
+  theme(legend.position='none')
+
+
+# top 20 states for Asians by raw population count
+census_demo %>%
+  select(State, TotalPop, Pct_Asian = Asian) %>%
+  mutate(AsianPop = TotalPop * (Pct_Asian/100)) %>%
+  top_n(20, AsianPop) %>%
+  ggplot(aes(reorder(State, AsianPop), AsianPop)) + 
+  geom_bar(stat='identity', aes(fill=State), alpha=0.8) + 
+  coord_flip() +
+  scale_y_continuous(labels=comma_format()) +
+  theme(legend.position='none')
+  
+
+# Distribution of demographics per state
+census_demo %>%
+  select(-TotalPop, -Men, -Women) %>%
+  gather(ethnicity, distribution, Hispanic:Pacific) %>%
+  mutate_at(vars(ethnicity), as.factor) %>% # converts specific variable from character to factor (not necessary TBH)
+  mutate(distribution = distribution / 100) %>%
+  ggplot(aes(State, distribution)) + 
+  geom_bar(stat='identity', position='stack', aes(fill=ethnicity)) +
+  coord_flip() +
+  scale_fill_brewer(palette='Spectral') +
+  scale_y_continuous(labels=percent_format())
+
+
