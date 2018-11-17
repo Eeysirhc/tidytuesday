@@ -1,6 +1,8 @@
 ---
 title: "TidyTuesday: ACS Census Data"
 output: html_notebook
+editor_options: 
+  chunk_output_type: console
 ---
 
 Analyzing data for #tidytuesday week of 4/30/2018
@@ -8,22 +10,24 @@ Analyzing data for #tidytuesday week of 4/30/2018
 source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-04-30
 
 ```{r}
-# load packages and parse raw data
+# load packages and parse data
 library(tidyverse)
 library(scales)
 library(RColorBrewer)
+library(forecats)
 theme_set(theme_bw())
 
 census_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-04-30/week5_acs2015_county_data.csv")
 
 census <- census_raw
-census$State <- as.factor(census$State)
+
+census
 ```
 
+Different ways to explore the data but a few possible dimensions: demographics, occupation and socio-economic factors
 
-
-# Combined demographics data
 ```{r}
+# create tibble for demographic data
 census_demo <- 
 census %>%
   select(State, TotalPop:Pacific) %>%
@@ -43,17 +47,20 @@ census %>%
   ungroup()
 ```
 
-# Top 20 States for Asians by distribution
+## Where do Asians live in terms of population distribution?
 ```{r}
 census_demo %>%
   top_n(20, Asian) %>%
-  ggplot(aes(reorder(State, Asian), Asian)) +
+  ggplot(aes(reorder(State, Asian), Asian/100)) +
   geom_bar(stat='identity', aes(fill=State), alpha=0.8) +
   coord_flip() +
-  theme(legend.position='none')
+  theme(legend.position='none') +
+  xlab("") + 
+  ylab("") +
+  scale_y_continuous(labels=percent_format())
 ```
 
-# Top 20 States for Asians by raw population count
+## Where do Asians live in terms of raw count? 
 ```{r}
 census_demo %>%
   select(State, TotalPop, Pct_Asian = Asian) %>%
@@ -63,27 +70,30 @@ census_demo %>%
   geom_bar(stat='identity', aes(fill=State), alpha=0.8) + 
   coord_flip() +
   scale_y_continuous(labels=comma_format()) +
-  theme(legend.position='none')
+  theme(legend.position='none') +
+  xlab("") +
+  ylab("")
 ```
 
-# Distribution of demographics per state
+## Distribution of demographics per state
 ```{r}
 census_demo %>%
   select(-TotalPop, -Men, -Women) %>%
   gather(ethnicity, distribution, Hispanic:Pacific) %>%
   mutate_at(vars(ethnicity), as.factor) %>% # converts specific variable from character to factor (not necessary TBH)
   mutate(distribution = distribution / 100) %>%
-  ggplot(aes(State, distribution)) + 
+  ggplot(aes(fct_rev(State), distribution)) + 
   geom_bar(stat='identity', position='stack', aes(fill=ethnicity)) +
   coord_flip() +
   scale_fill_brewer(palette='Spectral') +
-  scale_y_continuous(labels=percent_format())
+  scale_y_continuous(labels=percent_format()) +
+  xlab("") +
+  ylab("") +
+  theme_bw(base_size = 10) 
 ```
 
 
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+ 
 
 
