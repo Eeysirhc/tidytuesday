@@ -14,14 +14,14 @@ source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-04-
 library(tidyverse)
 library(scales)
 library(RColorBrewer)
-library(forecats)
+library(forcats)
+library(ggmap)
+library(tools)
+
 theme_set(theme_bw())
 
 census_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-04-30/week5_acs2015_county_data.csv")
-
 census <- census_raw
-
-census
 ```
 
 Different ways to explore the data but a few possible dimensions: demographics, occupation and socio-economic factors
@@ -47,7 +47,26 @@ census %>%
   ungroup()
 ```
 
-## Where do Asians live in terms of population distribution?
+### What is the population density by state for each ethnicity? 
+```{r}
+usa <- as.tibble(map_data("state"))
+usa$region <- toTitleCase(usa$region) # change state names from lower to upper case
+
+usa %>% 
+  select(long, lat, group, order, State = region, subregion) %>%
+  full_join(census_demo) %>%
+  gather(ethnicity = Hispanic:Pacific, value = Density) %>%
+  ggplot() +
+  geom_polygon(aes(long, lat, group = group, fill = Density), 
+               color = "black") +
+  scale_fill_gradient2(low = "white", mid = "#99d8c9", high = "#31a354", midpoint=50) +
+  facet_wrap(~key) +
+  theme_void() +
+  theme(legend.position = "none") 
+```
+
+
+### Where do Asians live in terms of population distribution?
 ```{r}
 census_demo %>%
   top_n(20, Asian) %>%
@@ -60,7 +79,7 @@ census_demo %>%
   scale_y_continuous(labels=percent_format())
 ```
 
-## Where do Asians live in terms of raw count? 
+### Where do Asians live in terms of raw count? 
 ```{r}
 census_demo %>%
   select(State, TotalPop, Pct_Asian = Asian) %>%
@@ -75,7 +94,7 @@ census_demo %>%
   ylab("")
 ```
 
-## Distribution of demographics per state
+### Distribution of demographics per state
 ```{r}
 census_demo %>%
   select(-TotalPop, -Men, -Women) %>%
@@ -91,9 +110,5 @@ census_demo %>%
   ylab("") +
   theme_bw(base_size = 10) 
 ```
-
-
-
- 
 
 
