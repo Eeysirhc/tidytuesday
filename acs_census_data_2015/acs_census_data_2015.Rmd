@@ -2,7 +2,7 @@
 title: "TidyTuesday: ACS Census Data"
 output: html_notebook
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 Analyzing data for #tidytuesday week of 4/30/2018
@@ -49,7 +49,7 @@ census %>%
 
 ### What is the population density by state for each ethnicity? 
 ```{r}
-usa <- as.tibble(map_data("state"))
+usa <- as_tibble(map_data("state"))
 usa$region <- toTitleCase(usa$region) # change state names from lower to upper case
 
 usa %>% 
