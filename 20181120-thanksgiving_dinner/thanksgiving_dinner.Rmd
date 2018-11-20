@@ -79,9 +79,16 @@ thanksgiving %>%
   filter(n > 10) %>%
   arrange(desc(n)) %>%
   ungroup() %>%
-  ggplot(aes(n, fct_rev(pie))) +
-  geom_point(aes(color = us_region), size = 8) +
-  scale_color_brewer(palette = 'Set1') +
+  ggplot(aes(us_region, fct_rev(pie), fill = n)) + 
+  geom_tile() +
+  scale_fill_gradient2(
+    name = 'n',
+    low = '#fee6ce',
+    mid = '#fdae6b',
+    high = '#e6550d',
+    midpoint = 100
+  ) +
+  theme_classic(base_size = 20) + 
   labs(x = "",
        y = "",
        title = "Most Popular Pies for Thanksgiving by US Region")
