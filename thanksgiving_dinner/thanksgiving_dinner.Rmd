@@ -2,7 +2,7 @@
 title: "TidyTuesday: Thanksgiving Dinner"
 output: html_notebook
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 Analyzing data for #tidytuesday week of 11/20/2018
@@ -13,11 +13,80 @@ source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-11-
 # load packages and parse data
 library(tidyverse)
 library(scales)
+library(RColorBrewer)
+library(forcats)
 
 theme_set(theme_bw())
 
 thanksgiving_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-11-20/thanksgiving_meals.csv")
 
-thanksgiving <- thanksgiving_raw
+thanksgiving <- 
+  thanksgiving_raw %>%
+  filter(celebrate != 'No')
+```
+
+
+### What are the most popular pies for Thanksgiving ?
+```{r}
+thanksgiving %>%
+  select(pie1:pie13) %>%
+  gather(pie_type = pie1:pie13, 
+         value = count) %>%
+  select(pie_type = key, 
+         pie = count) %>%
+  filter(pie != 'NA', !grepl('Other', pie), pie != 'None') %>% 
+  group_by(pie) %>%
+  count() %>% 
+  filter(n > 10) %>%
+  ungroup() %>%
+  ggplot(aes(reorder(pie, n), n, label = n)) +
+  geom_bar(aes(fill = pie),
+           alpha = 0.9,
+           stat='identity') +
+  geom_text(aes(label = n, color = pie), hjust = -0.5) +
+  coord_flip() +
+  theme_classic() + 
+  theme(legend.position = 'none') +
+  xlab("") +
+  ylab("") +
+  labs(title = "Most Popular Pies for Thanksgiving (n=980)",
+        subtitle = "Question: Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply")
+```
+
+
+### For a given age group, what do they think is the cutoff age for the kids table?
+```{r}
+thanksgiving %>%
+  select(age, kids_table_age) %>%
+  na.omit() %>%
+  ggplot() +
+  geom_bar(aes(fct_rev(age), fill = kids_table_age), 
+           position = 'fill',
+           alpha = 0.9) +
+  coord_flip() +
+  scale_fill_brewer(palette = 'Paired') +
+  xlab("") +
+  ylab("") + 
+  labs(title = "Graph title",
+       subtitle = "Question: What is the age cutoff at your 'kids table' at Thanksgiving?") +
+  scale_y_continuous(labels = percent_format())
+```
+
+### How do you cook your main dish?
+```{r}
+thanksgiving %>%
+  select(main_dish, main_prep, stuffing, cranberry) %>%
+  na.omit() %>%
+  filter(!grepl('know|Other', main_dish)) %>%
+  ggplot() + 
+  geom_bar(aes(fct_rev(main_dish), fill = main_prep), 
+           position = 'fill') + 
+  coord_flip() + 
+  scale_fill_brewer(palette = 'Paired') +
+  scale_y_continuous(labels = percent_format()) +
+  xlab("") +
+  ylab("") +
+  labs(title = "Most Popular Methods for Preparing Thanksgiving Dish",
+       subtitle = "Question: How is the main dish typically cooked?")
 ```
 
