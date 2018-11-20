@@ -29,7 +29,7 @@ thanksgiving <-
 ### What are the most popular pies for Thanksgiving ?
 ```{r}
 thanksgiving %>%
-  select(pie1:pie13) %>%
+  select(pie1:pie13, age, gender) %>%
   gather(pie_type = pie1:pie13, 
          value = count) %>%
   select(pie_type = key, 
@@ -52,6 +52,64 @@ thanksgiving %>%
   labs(title = "Most Popular Pies for Thanksgiving (n=980)",
         subtitle = "Question: Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply")
 ```
+
+### Most popular pies distributed by gender ?
+```{r}
+thanksgiving %>%
+  select(pie1:pie13, age, gender) %>%
+  gather(pie_type = pie1:pie13, 
+         value = count) %>%
+  select(gender, 
+         pie_type = key,
+         pie = count) %>%
+  na.omit() %>%
+  filter(!grepl('Other', pie), pie != 'None') %>% 
+  group_by(gender, pie) %>%
+  count() %>%
+  filter(n > 10) %>%
+  ungroup() %>%
+  ggplot(aes(reorder(pie, n), n)) +
+  geom_bar(stat = 'identity',
+           position = 'fill',
+           alpha = 0.9,
+           aes(fill = gender)) + 
+  scale_fill_brewer(palette = 'Set2') +
+  coord_flip() +
+  xlab("") +
+  ylab("") +
+  labs(title = "Most Popular Pies for Thanksgiving by Gender (n=980)") +
+  scale_y_continuous(labels = percent_format())
+```
+
+### Most popular pies distributed by age group?
+```{r}
+thanksgiving %>%
+  select(pie1:pie13, age, gender) %>%
+  gather(pie_type = pie1:pie13, 
+         value = count) %>%
+  select(age, 
+         pie_type = key,
+         pie = count) %>%
+  na.omit() %>%
+  filter(!grepl('Other', pie), pie != 'None') %>% 
+  group_by(age, pie) %>%
+  count() %>%
+  filter(n > 10) %>%
+  ungroup() %>%
+  ggplot(aes(reorder(pie, n), n)) +
+  geom_bar(stat = 'identity',
+           position = 'fill',
+           alpha = 0.8,
+           aes(fill = age)) + 
+  scale_fill_brewer(palette = 'Set1') +
+  coord_flip() +
+  xlab("") +
+  ylab("") +
+  labs(title = "Most Popular Pies for Thanksgiving by Age Group (n=980)") +
+  scale_y_continuous(labels = percent_format())
+```
+
+
 
 
 ### For a given age group, what do they think is the cutoff age for the kids table?
@@ -88,5 +146,10 @@ thanksgiving %>%
   ylab("") +
   labs(title = "Most Popular Methods for Preparing Thanksgiving Dish",
        subtitle = "Question: How is the main dish typically cooked?")
+```
+
+### Further exploration available to check out the top sides for Thanksgiving dinner!
+```{r}
+
 ```
 
