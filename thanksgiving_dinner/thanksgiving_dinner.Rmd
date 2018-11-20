@@ -1,0 +1,23 @@
+---
+title: "TidyTuesday: Thanksgiving Dinner"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Analyzing data for #tidytuesday week of 11/20/2018
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-11-20
+
+```{r}
+# load packages and parse data
+library(tidyverse)
+library(scales)
+
+theme_set(theme_bw())
+
+thanksgiving_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-11-20/thanksgiving_meals.csv")
+
+thanksgiving <- thanksgiving_raw
+```
+
