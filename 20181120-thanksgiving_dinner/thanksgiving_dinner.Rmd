@@ -2,7 +2,7 @@
 title: "TidyTuesday: Thanksgiving Dinner"
 output: html_notebook
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 Analyzing data for #tidytuesday week of 11/20/2018
@@ -16,7 +16,7 @@ library(scales)
 library(RColorBrewer)
 library(forcats)
 
-theme_set(theme_bw())
+theme_set(theme_bw(base_size = 20))
 
 thanksgiving_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-11-20/thanksgiving_meals.csv")
 
@@ -34,7 +34,8 @@ thanksgiving %>%
          value = count) %>%
   select(pie_type = key, 
          pie = count) %>%
-  filter(pie != 'NA', !grepl('Other', pie), pie != 'None') %>% 
+  na.omit() %>%
+  filter(!grepl('Other', pie), pie != 'None') %>% 
   group_by(pie) %>%
   count() %>% 
   filter(n > 10) %>%
@@ -45,26 +46,26 @@ thanksgiving %>%
            stat='identity') +
   geom_text(aes(label = n, color = pie), hjust = -0.5) +
   coord_flip() +
-  theme_classic() + 
+  theme_classic(base_size = 20) + 
   theme(legend.position = 'none') +
-  xlab("") +
-  ylab("") +
   labs(title = "Most Popular Pies for Thanksgiving (n=980)",
-        subtitle = "Question: Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply")
+        subtitle = "Question: Which type of pie is typically served at your Thanksgiving dinner? Please select all that apply",
+       x = "",
+       y = "")
 ```
 
 ### Most popular pies distributed by gender ?
 ```{r}
 thanksgiving %>%
-  select(pie1:pie13, age, gender) %>%
+  select(pie1:pie13, gender) %>%
   gather(pie_type = pie1:pie13, 
          value = count) %>%
-  select(gender, 
+  select(Gender = gender, 
          pie_type = key,
          pie = count) %>%
   na.omit() %>%
   filter(!grepl('Other', pie), pie != 'None') %>% 
-  group_by(gender, pie) %>%
+  group_by(Gender, pie) %>%
   count() %>%
   filter(n > 10) %>%
   ungroup() %>%
@@ -72,27 +73,27 @@ thanksgiving %>%
   geom_bar(stat = 'identity',
            position = 'fill',
            alpha = 0.9,
-           aes(fill = gender)) + 
+           aes(fill = Gender)) + 
   scale_fill_brewer(palette = 'Set2') +
   coord_flip() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Most Popular Pies for Thanksgiving by Gender (n=980)") +
-  scale_y_continuous(labels = percent_format())
+  labs(title = "Most Popular Pies for Thanksgiving by Gender (n=980)",
+       x = "", 
+       y = "") +
+  scale_y_continuous(labels = percent_format()) 
 ```
 
 ### Most popular pies distributed by age group?
 ```{r}
 thanksgiving %>%
-  select(pie1:pie13, age, gender) %>%
+  select(pie1:pie13, age) %>%
   gather(pie_type = pie1:pie13, 
          value = count) %>%
-  select(age, 
+  select(Age = age, 
          pie_type = key,
          pie = count) %>%
   na.omit() %>%
   filter(!grepl('Other', pie), pie != 'None') %>% 
-  group_by(age, pie) %>%
+  group_by(Age, pie) %>%
   count() %>%
   filter(n > 10) %>%
   ungroup() %>%
@@ -100,12 +101,12 @@ thanksgiving %>%
   geom_bar(stat = 'identity',
            position = 'fill',
            alpha = 0.8,
-           aes(fill = age)) + 
+           aes(fill = Age)) + 
   scale_fill_brewer(palette = 'Set1') +
   coord_flip() +
-  xlab("") +
-  ylab("") +
-  labs(title = "Most Popular Pies for Thanksgiving by Age Group (n=980)") +
+  labs(title = "Most Popular Pies for Thanksgiving by Age Group (n=980)",
+       x = "",
+       y = "") +
   scale_y_continuous(labels = percent_format())
 ```
 
@@ -123,10 +124,10 @@ thanksgiving %>%
            alpha = 0.9) +
   coord_flip() +
   scale_fill_brewer(palette = 'Paired') +
-  xlab("") +
-  ylab("") + 
   labs(title = "Graph title",
-       subtitle = "Question: What is the age cutoff at your 'kids table' at Thanksgiving?") +
+       subtitle = "Question: What is the age cutoff at your 'kids table' at Thanksgiving?",
+       x = "",
+       y = "") +
   scale_y_continuous(labels = percent_format())
 ```
 
@@ -142,10 +143,10 @@ thanksgiving %>%
   coord_flip() + 
   scale_fill_brewer(palette = 'Paired') +
   scale_y_continuous(labels = percent_format()) +
-  xlab("") +
-  ylab("") +
   labs(title = "Most Popular Methods for Preparing Thanksgiving Dish",
-       subtitle = "Question: How is the main dish typically cooked?")
+       subtitle = "Question: How is the main dish typically cooked?",
+       x = "",
+       y = "")
 ```
 
 ### Further exploration available to check out the top sides for Thanksgiving dinner!
