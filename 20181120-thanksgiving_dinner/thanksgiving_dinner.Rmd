@@ -54,6 +54,40 @@ thanksgiving %>%
        y = "")
 ```
 
+### Regions for most popular pies for Thanksgiving ?
+```{r}
+thanksgiving %>%
+  select(pie1:pie13, us_region) %>%
+  gather(pie_type = pie1:pie13, 
+         value = count) %>%
+  select(pie_type = key, 
+         pie = count,
+         us_region) %>%
+  filter(!grepl('Other', pie), pie != 'None', us_region != 'NA') %>% 
+  mutate(us_region = ifelse(us_region == 'South Atlantic', 'East', 
+                            ifelse(us_region == 'Middle Atlantic', 'North East', 
+                                   ifelse(us_region == 'East North Central', 'Midwest',
+                                          ifelse(us_region == 'East South Central', 'South',
+                                                 ifelse(us_region == 'West North Central', 'Midwest',
+                                                        ifelse(us_region == 'West South Central', 'South',
+                                                               ifelse(us_region == 'New England', 'North East',
+                                                                      ifelse(us_region == 'Pacific', 'West', 
+                                                                             ifelse(us_region == 'Mountain', 'Midwest',
+                                                               us_region)))))))))) %>%
+  group_by(us_region, pie) %>%
+  count() %>%
+  filter(n > 10) %>%
+  arrange(desc(n)) %>%
+  ungroup() %>%
+  ggplot(aes(n, fct_rev(pie))) +
+  geom_point(aes(color = us_region), size = 8) +
+  scale_color_brewer(palette = 'Set1') +
+  labs(x = "",
+       y = "",
+       title = "Most Popular Pies for Thanksgiving by US Region")
+```
+
+
 ### Most popular pies distributed by gender ?
 ```{r}
 thanksgiving %>%
