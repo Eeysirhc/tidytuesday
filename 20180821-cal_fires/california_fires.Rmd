@@ -20,8 +20,35 @@ library(ggmap)
 theme_set(theme_bw())
 
 calfire_incidents_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-08-21/cal-fire-incidents.csv")
+calfire_incidents <- calfire_incidents_raw %>%
+  select(year = YEAR,
+         fires = `NUMBER OF FIRES`,
+         acres_burned = `ACRES BURNED`,
+         dollar_damage = `DOLLAR DAMAGE`)
+inflation <- read_csv("adjust_inflation.csv")
 
-calfire_dmg_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-08-21/calfire_damage.csv")
-
+calfire_frap_raw <- read_csv("https://github.com/rfordatascience/tidytuesday/raw/master/data/2018-08-21/week21_calfire_frap.csv")
+calfire_frap <- calfire_frap_raw
 ```
 
+### Total number of fires over time
+
+Recent trends indicate this has steadily been on the decline over the years
+```{r}
+calfire_incidents %>%
+  ggplot() + 
+  geom_bar(aes(year, fires), 
+           stat = 'identity')
+```
+
+### Damage over time
+
+Increase in dollar damage over time may indicate 1) where the fires are actually happening and 2) if more people are living in more fire-prone areas of California
+```{r}
+calfire_incidents %>%
+  inner_join(inflation) %>%
+  mutate(inflation_dmg = `2016_damage` / acres_burned) %>%
+  ggplot() +
+  geom_bar(aes(year, inflation_dmg), 
+           stat = 'identity')
+```
