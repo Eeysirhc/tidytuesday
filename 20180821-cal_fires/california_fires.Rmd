@@ -1,0 +1,27 @@
+---
+title: "TidyTuesday: California Forest Fires"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+Analyzing data for #tidytuesday week of 8/21/2018
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-08-21
+
+```{r}
+# load packages and parse data
+
+library(tidyverse)
+library(scales)
+library(RColorBrewer)
+library(forcats)
+library(ggmap)
+
+theme_set(theme_bw())
+
+calfire_incidents_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-08-21/cal-fire-incidents.csv")
+
+calfire_dmg_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-08-21/calfire_damage.csv")
+
+```
+
