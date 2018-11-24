@@ -58,37 +58,37 @@ calfire_incidents %>%
   scale_y_continuous(labels = dollar_format()) +
   labs(x = "",
        y = "",
-       title = "$ Damage by Acres per year - adjusted for inflation (log10 scale)")
+       title = "$ Damage by Acres per year",
+       subtitle = "Adjusted for inflation in 2016 $")
 ```
 
-### What is the primary cause of forest fires?
+### What are the primary causes of forest fires?
 ```{r}
 # make "cause coding" table
 cause <- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 description <- c('Lightning','Equipment Use','Smoking','Campfire','Debris','Railroad','Arson','Playing with Fire','Miscellaneous','Vehicle','Power Line','Firefighter Training','Non-Firefighter Training','Unknown/Unidentified','Structure','Aircraft','Volcanic','Escaped Prescribed Burn','Illegal Alien Campfire')
 cause_coding <- as_tibble(cbind(cause, description))
 
-# convert original variable to character to allow for joining of data
+# convert original variable from int to character to allow for joining of data
 calfire_frap$cause <-as.character(calfire_frap$cause)
 
-calfire_frap %>% 
-  select(year_, cause, state) %>%
+calfire_frap %>%
   inner_join(cause_coding) %>%
-  group_by(year_, description, state) %>%
-  count() %>%
-  ungroup() %>%
-  ggplot(aes(state, description, fill = n)) + 
-  geom_tile() +
-  scale_fill_gradient2(
-    name = 'n',
-    low = '#fee0d2',
-    mid = '#fc9272',
-    high = '#de2d26',
-    midpoint = 150
-  ) +
-  theme_classic() +
-  labs(x = "",
-       y = "")
+  count(description, sort = TRUE) %>%
+  mutate(description = fct_reorder(description, n)) %>%
+  ggplot(aes(description, n/sum(n))) + 
+  geom_col(aes(fill = description)) + 
+  coord_flip() +
+  theme(legend.position = 'none') 
+
+
+
+calfire_frap %>%
+  inner_join(cause_coding) %>%
+  count(year_, description, sort = TRUE) %>%
+  ggplot(aes(year_, n/sum(n))) + 
+  geom_line(aes(color = description)) + 
+  theme(legend.position = 'none') 
 ```
 
 ### Which agency handles the most fires over the years?
@@ -100,6 +100,10 @@ calfire_frap %>%
   ungroup() %>%
   ggplot(aes(year_, n)) +
   geom_line(aes(color = agency))
+
+```
+
+```{r}
 
 ```
 
