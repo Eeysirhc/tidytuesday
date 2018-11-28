@@ -22,8 +22,7 @@ bridges_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidyt
 bridges <- bridges_raw
 ```
 
-
-### Older bridges typically receive less traffic over time
+### Do bridge conditions get better over time?
 ```{r}
 # manually reorder bridge_condition factors
 x <- bridges
@@ -55,6 +54,36 @@ x %>%
 
 ```
 
+### Is the improvement consistent across all bridge owners?
+```{r}
+x %>%
+  select(owner, bridge_condition, yr_built) %>% 
+  filter(owner != "Army", owner != "National Park Service", owner != "Navy/Marines", 
+         owner != "Other Local Agencies", owner != "Private (other than railroad)",
+         owner != "Town or Township Highway Agency", owner != "Other State Agencies") %>%
+  filter(yr_built > 1958) %>%
+  ggplot() + 
+  geom_density(aes(x = yr_built, fill = bridge_condition, color = bridge_condition), 
+               alpha = 0.3) +
+  facet_wrap(~owner) +
+  theme_bw(base_size = 15) +
+  scale_fill_brewer(palette = 'Set1') +
+  scale_color_brewer(palette = 'Set1') +
+  labs(x = "",
+       y = "",
+       fill = "Bridge Condition",
+       color = "Bridge Condition",
+       title = "Baltimore bridges: status of conditions over time by owner") +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
+  
+```
+
+
+
+
+
+
 ### How much does it cost to maintain the bridge per car?
 ```{r}
 # replace NA with 0
@@ -71,17 +100,6 @@ bridges %>%
   facet_grid(bridge_condition ~ .) + 
   theme_bw()
 
-```
-
-### Does the data record bridge_condition change over time for any given bridge?
-```{r}
-bridges %>%
-  select(carries, avg_daily_traffic, total_improve_cost_thousands, bridge_condition) %>%
-  group_by(bridge_condition) %>%
-  #mutate(total_improve_cost_thousands = (total_improve_cost_thousands)) %>% 
-  summarize(avg_daily_traffic = mean(avg_daily_traffic),
-            total_improve_cost_thousands = sum(total_improve_cost_thousands), 
-            cost_per_vehicle = total_improve_cost_thousands / avg_daily_traffic) %>% View()
 ```
 
 ### Validating lat/long data to fit Baltimore map
