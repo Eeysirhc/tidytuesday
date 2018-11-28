@@ -1,0 +1,21 @@
+---
+title: "TidyTuesday: Baltimore Bridges"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Analyzing data for #tidytuesday week of 11/20/2018
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-11-27
+
+```{r}
+# load packages and parse data
+library(tidyverse)
+library(scales)
+library(RColorBrewer)
+library(forcats)
+
+
+```
+
