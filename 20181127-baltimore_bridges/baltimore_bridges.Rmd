@@ -15,7 +15,90 @@ library(tidyverse)
 library(scales)
 library(RColorBrewer)
 library(forcats)
+library(ggmap)
 
+bridges_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-11-27/baltimore_bridges.csv")
+
+bridges <- bridges_raw
+```
+
+### Validating lat/long data to fit Baltimore map
+```{r}
+# note to self: coordinates from file not matching ggmap so come back to this at a later time
+
+baltimore <- as_tibble(map_data("county", regions = "maryland,baltimore"))
+
+bridges %>%
+  full_join(baltimore) %>%
+  group_by(lat, long) %>%
+  ggplot() + 
+  geom_point(aes(long, lat)) +
+  geom_polygon(data = baltimore, aes(long, lat, group = group), fill = NA, color = 'black')
 
 ```
+
+
+
+### Older bridges typically receive less traffic over time
+```{r}
+# reorder bridge_condition factors
+x <- bridges
+x$bridge_condition <- as.factor(x$bridge_condition)
+x$bridge_condition <- factor(x$bridge_condition, levels = c("Poor", "Fair", "Good"))
+
+x %>%  
+  filter(yr_built >= 1900) %>% # removing 2017 due to outlier
+  select(lat, long, yr_built, bridge_condition, avg_daily_traffic) %>%
+  group_by(yr_built, bridge_condition) %>%
+  summarize(avg_daily_traffic = mean(avg_daily_traffic)) %>%
+  ggplot() + 
+  geom_col(aes(yr_built, avg_daily_traffic, fill = bridge_condition),
+           alpha = 0.1) +
+  scale_y_continuous(label = comma_format()) +
+  scale_fill_brewer(palette = 'Set1') +
+  scale_color_brewer(palette = 'Set1') +
+  geom_smooth(aes(yr_built, avg_daily_traffic, 
+                  color = bridge_condition),
+              se = FALSE) +
+  theme_bw() +
+  
+  labs(x = "",
+        y = "",
+        title = "Average daily traffic over time for Baltimore bridges",
+       subtitle = "Applied smoothing to highlight differences")
+
+```
+
+### How much does it cost to maintain the bridge per car?
+```{r}
+# replace NA with 0
+bridges$total_improve_cost_thousands[is.na(bridges$total_improve_cost_thousands)] <- 0
+
+bridges %>% 
+  filter(yr_built >= 1900) %>%
+  select(lat, long, yr_built, bridge_condition, avg_daily_traffic, total_improve_cost_thousands) %>%
+  mutate(cost_car_improve = total_improve_cost_thousands / avg_daily_traffic) %>% 
+  group_by(yr_built, bridge_condition) %>%
+  ggplot() +
+  geom_col(aes(yr_built, cost_car_improve, fill = bridge_condition)) +
+  scale_y_continuous(label = dollar_format()) + 
+  facet_grid(bridge_condition ~ .) + 
+  theme_bw()
+
+```
+
+### Does the data record bridge_condition change over time for any given bridge?
+```{r}
+bridges %>% View()
+```
+
+
+
+
+
+
+
+
+
+
 
