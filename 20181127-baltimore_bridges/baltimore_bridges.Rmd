@@ -22,26 +22,10 @@ bridges_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidyt
 bridges <- bridges_raw
 ```
 
-### Validating lat/long data to fit Baltimore map
-```{r}
-# note to self: coordinates from file not matching ggmap so come back to this at a later time
-
-baltimore <- as_tibble(map_data("county", regions = "maryland,baltimore"))
-
-bridges %>%
-  full_join(baltimore) %>%
-  group_by(lat, long) %>%
-  ggplot() + 
-  geom_point(aes(long, lat)) +
-  geom_polygon(data = baltimore, aes(long, lat, group = group), fill = NA, color = 'black')
-
-```
-
-
 
 ### Older bridges typically receive less traffic over time
 ```{r}
-# reorder bridge_condition factors
+# manually reorder bridge_condition factors
 x <- bridges
 x$bridge_condition <- as.factor(x$bridge_condition)
 x$bridge_condition <- factor(x$bridge_condition, levels = c("Poor", "Fair", "Good"))
@@ -53,19 +37,21 @@ x %>%
   summarize(avg_daily_traffic = mean(avg_daily_traffic)) %>%
   ggplot() + 
   geom_col(aes(yr_built, avg_daily_traffic, fill = bridge_condition),
-           alpha = 0.1) +
-  scale_y_continuous(label = comma_format()) +
+           alpha = 0.3) +
+  scale_y_continuous(label = comma_format(), 
+                     limits = c(0, 223000)) +
   scale_fill_brewer(palette = 'Set1') +
   scale_color_brewer(palette = 'Set1') +
   geom_smooth(aes(yr_built, avg_daily_traffic, 
                   color = bridge_condition),
               se = FALSE) +
-  theme_bw() +
-  
+  theme_bw(base_size = 15) +
   labs(x = "",
         y = "",
-        title = "Average daily traffic over time for Baltimore bridges",
-       subtitle = "Applied smoothing to highlight differences")
+        title = "Baltimore bridges: average daily traffic over time",
+       subtitle = "Applied smoothing to highlight differences in bridge conditions and dampen outliers",
+       fill = "Bridge Condition",
+       color = "Bridge Condition") 
 
 ```
 
@@ -89,16 +75,27 @@ bridges %>%
 
 ### Does the data record bridge_condition change over time for any given bridge?
 ```{r}
-bridges %>% View()
+bridges %>%
+  select(carries, avg_daily_traffic, total_improve_cost_thousands, bridge_condition) %>%
+  group_by(bridge_condition) %>%
+  #mutate(total_improve_cost_thousands = (total_improve_cost_thousands)) %>% 
+  summarize(avg_daily_traffic = mean(avg_daily_traffic),
+            total_improve_cost_thousands = sum(total_improve_cost_thousands), 
+            cost_per_vehicle = total_improve_cost_thousands / avg_daily_traffic) %>% View()
 ```
 
+### Validating lat/long data to fit Baltimore map
+```{r}
+# note to self: coordinates from file not matching ggmap so come back to this at a later time
 
+baltimore <- as_tibble(map_data("county", regions = "maryland,baltimore"))
 
+bridges %>%
+  full_join(baltimore) %>%
+  group_by(lat, long) %>%
+  ggplot() + 
+  geom_point(aes(long, lat)) +
+  geom_polygon(data = baltimore, aes(long, lat, group = group), fill = NA, color = 'black')
 
-
-
-
-
-
-
+```
 
