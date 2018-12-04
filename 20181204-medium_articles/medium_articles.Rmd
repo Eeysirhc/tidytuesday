@@ -15,15 +15,110 @@ library(tidyverse)
 library(scales)
 library(RColorBrewer)
 library(forcats)
-library(ggmap)
+library(ggcorrplot)
+library(tidytext)
 
 articles_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-04/medium_datasci.csv")
 
 articles <- articles_raw
-
 ```
 
+
+
+### Who are the top authors and article tags ?
 ```{r}
-articles
+# top authors
+articles %>%
+  select(author, tag_ai:tag_machine_learning) %>%
+  gather(tag = tag_ai:tag_machine_learning, value = count) %>%
+  group_by(author, key) %>%
+  summarize(count = sum(count)) %>% 
+  arrange(desc(count)) 
+
+# top tags
+articles %>%
+  select(tag_ai:tag_machine_learning) %>%
+  gather(tag = tag_ai:tag_machine_learning, value = count) %>%
+  group_by(key) %>%
+  summarize(count = sum(count)) %>%
+  arrange(desc(count)) 
 ```
 
+### Are there differences in words used between the titles and subtitles for articles ?
+```{r}
+data(stop_words)
+
+tidy_articles <- articles %>% 
+  select(title, subtitle, tag_ai:tag_machine_learning) %>%
+  gather(tag = tag_ai:tag_machine_learning) %>% 
+  na.omit() %>%
+  mutate(text = paste(title, " ", subtitle)) %>%
+  select(key, text) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words)
+  #filter(!word %in% stop_words$word)
+
+frequency <- 
+  tidy_articles %>%
+  group_by(key) %>%
+  mutate(word = str_extract(word, "[a-z']+")) %>%
+  count(word, sort = TRUE) %>%
+  mutate(proportion = n/sum(n)) %>%
+  select(-n) %>%
+  spread(key, proportion) %>%
+  gather(key, proportion, `tag_ai`:`tag_machine_learning`)
+
+ggplot(frequency, aes(x=proportion, y=`tag_ai`, color=abs(`tag_ai` - proportion))) +
+  geom_abline(color = "gray40", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), 
+                       low = "darkslategray4", high = "gray75") +
+  facet_wrap(~key, ncol = 2) +
+  theme(legend.position = "none") +
+  labs(y = "tag_ai",
+       x = "")
+```
+
+
+### Is there a relationship between reading time and claps by article?
+```{r}
+# Plot the data to identify trends
+articles %>%
+  select(reading_time, claps, tag_ai:tag_machine_learning) %>%
+  gather(tag = tag_ai:tag_machine_learning) %>% 
+  select(-value) %>% 
+  group_by(key, reading_time) %>%
+  summarize(claps = sum(claps)) %>% 
+  ggplot(aes(reading_time, claps, fill = key)) + 
+  geom_col() +
+  facet_wrap(~key) +
+  scale_y_continuous(labels = comma_format()) +
+  scale_x_continuous(limits = c(0,25)) +
+  theme_bw() + 
+  theme(legend.position = 'none') +
+  labs(x = "",
+       y = "",
+       title = "Relationship between reading time of article and total number of claps",
+       subtitle = "The 'sweet spot' is 5 minutes")
+
+# What about a correlogram?
+articles_tags <- 
+  articles %>%
+  select(reading_time, claps, tag_ai:tag_machine_learning) 
+articles_correlations <- round(cor(articles_tags), 1)
+
+ggcorrplot(articles_correlations, hc.order = TRUE, 
+           type = "lower", 
+           lab = TRUE, 
+           lab_size = 3, 
+           method="circle", 
+           colors = c("salmon", "white", "steelblue"), 
+           title="Correlogram of article tags", 
+           ggtheme=theme_bw)
+
+# No clear relationship but perhaps there might be something between the different tags ?
+
+```
