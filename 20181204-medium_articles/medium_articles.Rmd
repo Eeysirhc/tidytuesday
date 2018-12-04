@@ -24,26 +24,26 @@ articles_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidy
 articles <- articles_raw
 ```
 
-
-
-### Who are the top authors in terms of Medium claps?
+### Who are the top authors in terms of total articles?
 ```{r}
 top_authors <- articles %>%
-  select(author, claps) %>%
+  select(author) %>%
   group_by(author) %>%
-  summarize(claps = sum(claps)) %>%
-  na.omit() %>% 
-  arrange(desc(claps)) %>%
-  select(author)
+  count() %>%
+  arrange(desc(n)) %>%
+  na.omit() %>%
   head(10)
 
-# top tags
-articles %>%
-  select(tag_ai:tag_machine_learning) %>%
-  gather(tag = tag_ai:tag_machine_learning, value = count) %>%
-  group_by(key) %>%
-  summarize(count = sum(count)) %>%
-  arrange(desc(count)) 
+top_authors %>%
+  ggplot() + 
+  geom_col(aes(reorder(author, n), n), 
+           fill = "darkslategray4",
+           alpha = 0.8) + 
+  coord_flip() +
+  theme_bw(base_size = 15) +
+  labs(x = "",
+       y = "",
+       title = "Top 10 authors on Medium in terms of total articles published")
 ```
 
 ### Are there differences in words used between the titles and subtitles for articles ?
@@ -71,24 +71,24 @@ tidy_authors %>%
   ggplot(aes(x=proportion, y=`Yves Mulkers`, color = abs(`Yves Mulkers` - proportion))) +
   geom_jitter(alpha = 0.1, size = 2.5, width = 0.25, height = 0.25) +
   geom_text(aes(label = word), check_overlap = TRUE, vjust = 1, hjust = 1) +
-  geom_abline(color = "red", linetype = 2) +
+  geom_abline(color = "darkslategray4", linetype = 2) +
   scale_color_gradient(limits = c(0, 0.01), 
-                       low = "darkslategray4", high = "steelblue") +
-  scale_x_log10(labels = percent_format()) +
-  scale_y_log10(labels = percent_format()) +
+                       low = "salmon", high = "blue") +
+  scale_x_log10(labels = percent_format(round(1))) +
+  scale_y_log10(labels = percent_format(round(1))) +
   labs(y = "Yves Mulkers",
-       x = "Top 10 Authors",
-       title = "Comparing the word frequencies (title & subtitle) of the top 10 Medium authors") +
-  theme_bw() +
+       x = "",
+       title = "Comparing the word frequencies for the top 10 authors on Medium (title & subtitle only)",
+       subtitle = " \"Top 10\" defined as the total number of articles published") +
+  theme_bw(base_size = 15) +
   theme(legend.position = "none") +
   facet_wrap(~author, ncol = 3)
-
 ```
 
 
 ### Is there a relationship between reading time and claps by article?
 ```{r}
-# Plot the data to identify trends
+# Plot to see if there are any trends
 articles %>%
   select(reading_time, claps, tag_ai:tag_machine_learning) %>%
   gather(tag = tag_ai:tag_machine_learning) %>% 
@@ -107,7 +107,7 @@ articles %>%
        title = "Relationship between reading time of article and total number of claps",
        subtitle = "The 'sweet spot' is 5 minutes")
 
-# What about a correlogram?
+# What about correlation?
 articles_tags <- 
   articles %>%
   select(reading_time, claps, tag_ai:tag_machine_learning) 
