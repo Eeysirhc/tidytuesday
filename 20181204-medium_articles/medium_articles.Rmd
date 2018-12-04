@@ -17,6 +17,7 @@ library(RColorBrewer)
 library(forcats)
 library(ggcorrplot)
 library(tidytext)
+library(stringr)
 
 articles_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-04/medium_datasci.csv")
 
@@ -56,7 +57,6 @@ tidy_articles <- articles %>%
   select(key, text) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words)
-  #filter(!word %in% stop_words$word)
 
 frequency <- 
   tidy_articles %>%
@@ -65,20 +65,18 @@ frequency <-
   count(word, sort = TRUE) %>%
   mutate(proportion = n/sum(n)) %>%
   select(-n) %>%
-  spread(key, proportion) %>%
-  gather(key, proportion, `tag_ai`:`tag_machine_learning`)
+  spread(key, proportion) 
 
-ggplot(frequency, aes(x=proportion, y=`tag_ai`, color=abs(`tag_ai` - proportion))) +
-  geom_abline(color = "gray40", lty = 2) +
-  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+
+ggplot(frequency, aes(tag_deep_learning, tag_machine_learning)) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.25, height = 0.25) +
   geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_color_gradient(limits = c(0, 0.01), 
+                       low = "darkslategray4", high = "gray75") +
   scale_x_log10(labels = percent_format()) +
   scale_y_log10(labels = percent_format()) +
-  scale_color_gradient(limits = c(0, 0.001), 
-                       low = "darkslategray4", high = "gray75") +
-  facet_wrap(~key, ncol = 2) +
-  theme(legend.position = "none") +
-  labs(y = "tag_ai",
+  geom_abline(color = "red") +
+  labs(y = "",
        x = "")
 ```
 
