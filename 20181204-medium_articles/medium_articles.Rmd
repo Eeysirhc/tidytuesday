@@ -26,15 +26,16 @@ articles <- articles_raw
 
 
 
-### Who are the top authors and article tags ?
+### Who are the top authors in terms of Medium claps?
 ```{r}
-# top authors
-articles %>%
-  select(author, tag_ai:tag_machine_learning) %>%
-  gather(tag = tag_ai:tag_machine_learning, value = count) %>%
-  group_by(author, key) %>%
-  summarize(count = sum(count)) %>% 
-  arrange(desc(count)) 
+top_authors <- articles %>%
+  select(author, claps) %>%
+  group_by(author) %>%
+  summarize(claps = sum(claps)) %>%
+  na.omit() %>% 
+  arrange(desc(claps)) %>%
+  select(author)
+  head(10)
 
 # top tags
 articles %>%
@@ -49,35 +50,39 @@ articles %>%
 ```{r}
 data(stop_words)
 
-tidy_articles <- articles %>% 
-  select(title, subtitle, tag_ai:tag_machine_learning) %>%
-  gather(tag = tag_ai:tag_machine_learning) %>% 
+tidy_authors <-
+  articles %>%
+  inner_join(top_authors) %>%
+  select(title, subtitle, author) %>%
   na.omit() %>%
   mutate(text = paste(title, " ", subtitle)) %>%
-  select(key, text) %>%
+  select(author, text) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words)
 
-frequency <- 
-  tidy_articles %>%
-  group_by(key) %>%
+tidy_authors %>%
+  group_by(author) %>%
   mutate(word = str_extract(word, "[a-z']+")) %>%
   count(word, sort = TRUE) %>%
-  mutate(proportion = n/sum(n)) %>%
+  mutate(proportion = n / sum(n)) %>%
   select(-n) %>%
-  spread(key, proportion) 
-
-
-ggplot(frequency, aes(tag_deep_learning, tag_machine_learning)) +
+  spread(author, proportion) %>% 
+  gather(author, proportion, `AI Hawk`:`Synced`) %>%
+  ggplot(aes(x=proportion, y=`Yves Mulkers`, color = abs(`Yves Mulkers` - proportion))) +
   geom_jitter(alpha = 0.1, size = 2.5, width = 0.25, height = 0.25) +
-  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1, hjust = 1) +
+  geom_abline(color = "red", linetype = 2) +
   scale_color_gradient(limits = c(0, 0.01), 
-                       low = "darkslategray4", high = "gray75") +
+                       low = "darkslategray4", high = "steelblue") +
   scale_x_log10(labels = percent_format()) +
   scale_y_log10(labels = percent_format()) +
-  geom_abline(color = "red") +
-  labs(y = "",
-       x = "")
+  labs(y = "Yves Mulkers",
+       x = "Top 10 Authors",
+       title = "Comparing the word frequencies (title & subtitle) of the top 10 Medium authors") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  facet_wrap(~author, ncol = 3)
+
 ```
 
 
@@ -118,5 +123,4 @@ ggcorrplot(articles_correlations, hc.order = TRUE,
            ggtheme=theme_bw)
 
 # No clear relationship but perhaps there might be something between the different tags ?
-
 ```
