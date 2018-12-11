@@ -15,10 +15,40 @@ library(tidyverse)
 library(scales)
 library(RColorBrewer)
 library(forcats)
-library(ggcorrplot)
+library(lubridate)
 
 nyc_restaurants_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-11/nyc_restaurants.csv")
 
-nyc_restaurants <- nyc_restaurants_raw
+nyc_restaurants <- nyc_restaurants_raw %>%
+  filter(inspection_date != '01/01/1900') %>% # filter out establishments which have not been inspected yet
+  filter(grepl("A|B|C", grade)) # filter those without grades
 ```
+
+```{r}
+# EDA portion
+nyc_restaurants %>% sample_n(5000) %>% View()
+```
+
+### What is the distribution of scores based on cuisine ?
+```{r}
+top_cuisines <- nyc_restaurants %>%
+  select(cuisine_description, score) %>%
+  count(cuisine_description) %>%
+  arrange(desc(n)) %>%
+  top_n(5)
+
+# density by score
+nyc_restaurants %>%
+  select(cuisine_description, score) %>% 
+  left_join(top_cuisines) %>% 
+  drop_na(n) %>%
+  ggplot() + 
+  geom_density(aes(score, fill = cuisine_description, color = cuisine_description), 
+               alpha = 0.1) +
+  scale_x_log10() +
+  theme_bw()
+
+
+```
+
 
