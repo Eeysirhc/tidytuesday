@@ -47,7 +47,7 @@ nyc_restaurants %>%
 
 ```
 
-No, there's an inverse relationship between grade and score. Thus, a lower score == A (higher grade)
+No, there is an inverse relationship between grade and score. Thus, a lower score == A (higher grade)
 
 
 
