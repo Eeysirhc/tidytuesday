@@ -20,14 +20,79 @@ library(lubridate)
 nyc_restaurants_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-11/nyc_restaurants.csv")
 
 nyc_restaurants <- nyc_restaurants_raw %>%
-  filter(inspection_date != '01/01/1900') %>% # filter out establishments which have not been inspected yet
-  filter(grepl("A|B|C", grade)) # filter those without grades
+  filter(inspection_date != '01/01/1900') #%>% # filter out establishments which have not been inspected yet
+  #filter(grepl("A|B|C", grade)) %>% # filter those without grades
+  #filter(!grepl("Missing", boro))
 ```
 
+
+### Does a high score equate to a high grade?
 ```{r}
-# EDA portion
-nyc_restaurants %>% sample_n(5000) %>% View()
+nyc_restaurants %>%
+  select(score, grade) %>%
+  drop_na(score) %>%
+  group_by(grade) %>%
+  summarize(min = min(score),
+            mean = mean(score),
+            median = median(score),
+            max = max(score))
+   
+
+nyc_restaurants %>%
+  select(score, grade) %>%
+  drop_na(score) %>%
+  ggplot() + 
+  geom_density(aes(score, fill = grade)) +
+  theme_bw()
+
 ```
+
+No, there's a counter intuitive inverse relationship between grade and score. Thus, a lower score == A (higher grade)
+
+
+
+### What is the average score by cuisine type?
+```{r}
+scores <- nyc_restaurants %>%
+  select(cuisine_description, score) %>%
+  group_by(cuisine_description) %>%
+  na.omit() %>%
+  summarize(mean = mean(score),
+            total = n(),
+            low = qbeta(0.025, mean + 0.5, total - mean + 0.5),
+            high = qbeta(0.975, mean + 0.5, total - mean + 0.5),
+            segment = ifelse(mean >= 21.336, "above", 
+                             ifelse(mean <= 17.665, "below", "average"))) %>%
+  na.omit()
+
+summary(scores$mean)
+#1stQ: 17.665
+#3rdQ: 21.336
+
+scores %>%
+  filter(total > 100) %>%
+  arrange(desc(total)) %>%
+  select(cuisine_description, low, mean, high, total, segment) %>% 
+  ggplot() +
+  geom_point(aes(reorder(cuisine_description, -mean), mean, color = segment),
+             size = 2) + 
+  geom_errorbar(aes(x=cuisine_description, ymin=mean-low, ymax=mean+high, color = segment),
+                size = 0.5) +
+  coord_flip() +
+  #theme_classic(base_size = 10) +
+  theme_bw(base_size = 15) +
+  labs(x = "",
+       y = "",
+       title = "Average inspection score for NY restaurants by cuisine",
+       subtitle = "With \"5.733\" being the higest score; minimum 100 inspections per cruisine type",
+       caption = "Source: NYC Open Data") + 
+  scale_color_brewer(palette = 'Accent', direction = -1) +
+  theme(legend.position = 'none')
+
+```
+
+
+
 
 ### What is the distribution of scores based on cuisine ?
 ```{r}
@@ -35,7 +100,7 @@ top_cuisines <- nyc_restaurants %>%
   select(cuisine_description, score) %>%
   count(cuisine_description) %>%
   arrange(desc(n)) %>%
-  top_n(5)
+  top_n(20)
 
 # density by score
 nyc_restaurants %>%
@@ -48,7 +113,30 @@ nyc_restaurants %>%
   scale_x_log10() +
   theme_bw()
 
-
 ```
 
+
+
+
+### Is there a difference in scores by cuisine for each boro ?
+```{r}
+nyc_restaurants %>%
+  select(cuisine_description, boro, score) %>%
+  group_by(cuisine_description, boro) %>%
+  na.omit() %>%
+  summarize(mean = mean(score),
+            total = n(),
+            low = qbeta(0.025, mean + 0.5, total - mean + 0.5),
+            high = qbeta(0.975, mean + 0.5, total - mean + 0.5)) %>%
+  na.omit() %>% 
+  top_n(50) %>% 
+  select(cuisine_description, boro, low, mean, high, total) %>% 
+  ggplot() +
+  geom_point(aes(reorder(cuisine_description, mean), mean)) + 
+  geom_errorbar(aes(x=cuisine_description, ymin=mean-low, ymax=mean+high)) +
+  coord_flip() +
+  theme_bw() +
+  facet_wrap(~boro)
+
+```
 
