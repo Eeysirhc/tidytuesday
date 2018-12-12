@@ -47,7 +47,7 @@ nyc_restaurants %>%
 
 ```
 
-No, there's a counter intuitive inverse relationship between grade and score. Thus, a lower score == A (higher grade)
+No, there's an inverse relationship between grade and score. Thus, a lower score == A (higher grade)
 
 
 
@@ -79,12 +79,11 @@ scores %>%
   geom_errorbar(aes(x=cuisine_description, ymin=mean-low, ymax=mean+high, color = segment),
                 size = 0.5) +
   coord_flip() +
-  #theme_classic(base_size = 10) +
-  theme_bw(base_size = 15) +
+  theme_bw(base_size = 10) +
   labs(x = "",
        y = "",
        title = "Average inspection score for NY restaurants by cuisine",
-       subtitle = "With \"5.733\" being the higest score; minimum 100 inspections per cruisine type",
+       subtitle = "Best score of \"5.733\"; minimum 100 inspections per cruisine type",
        caption = "Source: NYC Open Data") + 
   scale_color_brewer(palette = 'Accent', direction = -1) +
   theme(legend.position = 'none')
