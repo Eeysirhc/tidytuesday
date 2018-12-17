@@ -125,9 +125,9 @@ ebb_cuisine_grades %>%
        title = "Rate of NYC restaurant inspections with a final grade of \'A\' by cuisine type",
        subtitle = "Minimum 100 inspections or more",
        caption = "Source: NYC Open Data") +
-  scale_color_discrete(name = "New Legend Title") +
   scale_color_brewer(palette = 'Set1', direction = -1) +
   theme(legend.title=element_blank())
+
 ```
 
 
