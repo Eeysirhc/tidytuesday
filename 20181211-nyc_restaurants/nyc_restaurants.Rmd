@@ -16,6 +16,7 @@ library(scales)
 library(RColorBrewer)
 library(forcats)
 library(lubridate)
+library(ebbr)
 
 nyc_restaurants_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-11/nyc_restaurants.csv")
 
@@ -89,6 +90,46 @@ scores %>%
   theme(legend.position = 'none')
 
 ```
+
+
+
+### What is the rate of inspection grade of "A" by cuisine type (added 12/16/2018)
+```{r}
+cuisine_grades <- nyc_restaurants %>%
+  select(cuisine_description, grade) %>%
+  na.omit() %>%
+  group_by(cuisine_description) %>%
+  count(grade) %>%
+  mutate(total = sum(n),
+         pct_total = n/total) %>%
+  ungroup()
+
+ebb_cuisine_grades <- cuisine_grades %>%
+  add_ebb_estimate(n, total) %>%
+  filter(grade == "A") %>%
+  arrange(desc(.fitted)) %>%
+  filter(n >= 100) %>%
+  head(30) 
+
+ebb_cuisine_grades %>%
+  select(cuisine_description, "Empirical Bayes Rate"=.fitted, "Measured Rate"=.raw, .low, .high) %>%
+  gather(key, value, -cuisine_description, -.low, -.high) %>%
+  ggplot() + 
+  geom_point(aes(reorder(cuisine_description, value), value, color = key), size = 3) +
+  geom_errorbar(aes(ymin = .low, ymax = .high, x=cuisine_description), color = "gray50") +
+  scale_y_continuous(labels = percent_format(round(1))) +
+  coord_flip() +
+  theme_minimal(base_size = 10) +
+  labs(x = "",
+       y = "",
+       title = "Rate of NYC restaurant inspections with a final grade of \'A\' by cuisine type",
+       subtitle = "Minimum 100 inspections or more",
+       caption = "Source: NYC Open Data") +
+  scale_color_discrete(name = "New Legend Title") +
+  scale_color_brewer(palette = 'Set1', direction = -1) +
+  theme(legend.title=element_blank())
+```
+
 
 
 
