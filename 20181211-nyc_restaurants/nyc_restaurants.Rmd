@@ -119,11 +119,11 @@ ebb_cuisine_grades %>%
   geom_errorbar(aes(ymin = .low, ymax = .high, x=cuisine_description), color = "gray50") +
   scale_y_continuous(labels = percent_format(round(1))) +
   coord_flip() +
-  theme_minimal(base_size = 10) +
+  theme_minimal(base_size = 15) +
   labs(x = "",
        y = "",
        title = "Rate of NYC restaurant inspections with a final grade of \'A\' by cuisine type",
-       subtitle = "Minimum 100 inspections or more",
+       subtitle = "95% credible intervals with a minimum of 100 inspections",
        caption = "Source: NYC Open Data") +
   scale_color_brewer(palette = 'Set1', direction = -1) +
   theme(legend.title=element_blank())
