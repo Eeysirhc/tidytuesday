@@ -1,0 +1,31 @@
+---
+title: "TidyTuesday: Cetaceans Dataset"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Analyzing data for #tidytuesday week of 12/18/2018
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-12-18
+
+```{r}
+# load packages and parse data
+library(tidyverse)
+library(scales)
+library(RColorBrewer)
+library(forcats)
+library(lubridate)
+library(ebbr)
+
+cetaceans_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-18/allCetaceanData.csv")
+
+cetaceans <- cetaceans_raw
+
+```
+
+
+```{r}
+cetaceans
+```
+
