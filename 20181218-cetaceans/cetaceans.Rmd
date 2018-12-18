@@ -21,11 +21,19 @@ library(ebbr)
 cetaceans_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-18/allCetaceanData.csv")
 
 cetaceans <- cetaceans_raw
-
 ```
 
 
 ```{r}
-cetaceans
+cetaceans_age <- cetaceans %>% 
+  select(species, sex, acquisition, status, birthYear, originDate, statusDate) %>% 
+  mutate(statusDate = replace_na(statusDate, "2017-05-07"), # BASED ON DATE LIMIT
+         age_years = ((statusDate - originDate)/365),
+         age_years = (gsub(" days", "", age_years)), # REMOVE "DAYS" FROM THE VALUE
+         statusYear = year(statusDate),
+         originYear = year(originDate),
+         birthYear = year(as.Date(birthYear, format = "%Y")))
+  
+cetaceans_age %>% View()
 ```
 
