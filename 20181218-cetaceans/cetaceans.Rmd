@@ -27,13 +27,23 @@ cetaceans <- cetaceans_raw
 ```{r}
 cetaceans_age <- cetaceans %>% 
   select(species, sex, acquisition, status, birthYear, originDate, statusDate) %>% 
-  mutate(statusDate = replace_na(statusDate, "2017-05-07"), # BASED ON DATE LIMIT
-         age_years = ((statusDate - originDate)/365),
-         age_years = (gsub(" days", "", age_years)), # REMOVE "DAYS" FROM THE VALUE
+  mutate(statusDate = replace_na(statusDate, "2017-05-07"), # BASED ON DATA DICTIONARY
          statusYear = year(statusDate),
          originYear = year(originDate),
-         birthYear = year(as.Date(birthYear, format = "%Y")))
-  
-cetaceans_age %>% View()
+         birthYear = year(as.Date(birthYear, format = "%Y")),
+         age_years = statusYear - birthYear) %>%
+  filter(age_years >= 0)
+
+
+### average life span
+cetaceans_age %>% 
+  group_by(species) %>% 
+  filter(status == 'Died', acquisition == 'Capture') %>% 
+  View()
+
+# up next: group birth years by decade for better segmentation of analysis
+
 ```
+
+
 
