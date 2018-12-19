@@ -16,7 +16,7 @@ library(scales)
 library(RColorBrewer)
 library(forcats)
 library(lubridate)
-library(ebbr)
+library(tidytext)
 
 cetaceans_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018-12-18/allCetaceanData.csv")
 
@@ -24,7 +24,75 @@ cetaceans <- cetaceans_raw
 ```
 
 
+
 ```{r}
+# most notable deaths between M vs F?
+cetaceans %>% 
+  select(sex, COD) %>%
+  filter(sex != "U") %>%
+  na.omit() %>%
+  mutate(sex = replace(sex, str_detect(sex, "F"), "Female"), 
+         sex = replace(sex, str_detect(sex, "M"), "Male")) %>%
+  unnest_tokens(bigram, COD, token = "ngrams", n = 2) %>%
+  count(sex, bigram) %>%
+  bind_tf_idf(bigram, sex, n) %>%
+  arrange(desc(tf_idf)) %>%
+  filter(tf_idf > 0.001) %>%
+  ggplot() +
+  geom_col(aes(reorder(bigram, tf_idf), tf_idf, fill = sex)) +
+  coord_flip() +
+  scale_fill_brewer(palette = 'Set2') +
+  facet_wrap(~sex, scales = "free") +
+  labs(x = "",
+       y = "",
+       title = "Bigrams with highest TF-IDF for cause of death between Female and Male Cetacean (reported)") +
+  theme_bw(base_size = 10) +
+  theme(legend.position = 'none')
+
+```
+
+
+
+```{r}
+# what is the primary cause of death between Born vs Capture?
+cod_acquisition_ratio <- cetaceans %>%
+  select(acquisition, COD) %>%
+  filter(acquisition == 'Born' | acquisition == 'Capture') %>%
+  na.omit() %>%
+  mutate(COD = tolower(COD)) %>%
+  count(COD, acquisition) %>%
+  filter(sum(n) >= 10) %>%
+  ungroup() %>%
+  spread(acquisition, n, fill = 0) %>%
+  mutate_if(is.numeric, funs((. + 1) / sum(. +1))) %>%
+  mutate(logratio = log(Born / Capture)) %>%
+  arrange(desc(logratio))
+  
+cod_acquisition_ratio %>%
+  arrange(abs(logratio)) %>%
+  group_by(logratio < 0) %>%
+  top_n(10, abs(logratio)) %>%
+  ungroup() %>%
+  mutate(COD = reorder(COD, logratio)) %>%
+  ggplot() +
+  geom_col(aes(COD, logratio, fill = logratio < 0)) +
+  coord_flip() +
+  scale_fill_brewer(palette = 'Accent',
+                    name = "", 
+                    labels = c("Born", "Capture")) +
+  theme_bw(base_size = 10) +
+  labs(x = "",
+       y = "Log Odds Ratio (Born / Capture)",
+       title = "Comparing the odds ratio of words for cause of death \n  between Cetacean's captured from the ocean or born in captivity (reported)")
+
+```
+
+
+
+
+
+```{r}
+# group birth years by decade for better segmentation of analysis
 cetaceans_age <- cetaceans %>% 
   select(species, sex, acquisition, status, birthYear, originDate, statusDate) %>% 
   mutate(statusDate = replace_na(statusDate, "2017-05-07"), # BASED ON DATA DICTIONARY
@@ -41,9 +109,51 @@ cetaceans_age %>%
   filter(status == 'Died', acquisition == 'Capture') %>% 
   View()
 
-# up next: group birth years by decade for better segmentation of analysis
-
 ```
 
 
+
+
+```{r}
+# raw cause of death
+cetaceans %>% 
+  select(COD) %>%
+  na.omit() %>%
+  unnest_tokens(word, COD) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE) %>%
+  mutate(pct_total = n/sum(n)) %>%
+  filter(n > 30) %>%
+  ggplot() + 
+  geom_col(aes(reorder(word, pct_total), pct_total)) +
+  coord_flip() +
+  theme_bw(base_size = 10) +
+  labs(x = "",
+       y = "",
+       title = "Top terms as reported for the cause of Cetacean death") +
+  scale_y_continuous(labels = percent_format(round(1)))
+
+# does not give a whole lot of information so bigram may be btter
+
+cetaceans %>% 
+  select(COD) %>%
+  na.omit() %>%
+  unnest_tokens(bigram, COD, token = "ngrams", n = 2) %>%
+  count(bigram, sort = TRUE) %>%
+  mutate(pct_total = n/sum(n)) %>%
+  filter(n > 12) %>%
+  filter(bigram != "due to") %>%
+  ggplot() + 
+  geom_col(aes(reorder(bigram, pct_total), pct_total)) + 
+  coord_flip() + 
+  theme_bw(base_size = 10) +
+  labs(x = "",
+       y = "") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+# mostly old age and pneumonia but may require additional data cleaning
+
+```
 
