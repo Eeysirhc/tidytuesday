@@ -37,18 +37,17 @@ cetaceans %>%
   count(sex, bigram) %>%
   bind_tf_idf(bigram, sex, n) %>%
   arrange(desc(tf_idf)) %>%
-  filter(tf_idf > 0.001) %>%
+  filter(tf_idf > 0.0011) %>%
   ggplot() +
   geom_col(aes(reorder(bigram, tf_idf), tf_idf, fill = sex)) +
   coord_flip() +
-  scale_fill_brewer(palette = 'Set2') +
-  facet_wrap(~sex, scales = "free") +
+  scale_fill_brewer(palette = 'Set2',
+                    name = "") +
   labs(x = "",
        y = "",
        title = "Bigrams with highest TF-IDF for cause of death between Female and Male Cetacean (reported)",
        caption = "Source: The Pudding") +
-  theme_bw(base_size = 15) +
-  theme(legend.position = 'none')
+  theme_bw(base_size = 15) 
 
 ```
 
