@@ -45,8 +45,9 @@ cetaceans %>%
   facet_wrap(~sex, scales = "free") +
   labs(x = "",
        y = "",
-       title = "Bigrams with highest TF-IDF for cause of death between Female and Male Cetacean (reported)") +
-  theme_bw(base_size = 10) +
+       title = "Bigrams with highest TF-IDF for cause of death between Female and Male Cetacean (reported)",
+       caption = "Source: The Pudding") +
+  theme_bw(base_size = 15) +
   theme(legend.position = 'none')
 
 ```
@@ -80,10 +81,11 @@ cod_acquisition_ratio %>%
   scale_fill_brewer(palette = 'Accent',
                     name = "", 
                     labels = c("Born", "Capture")) +
-  theme_bw(base_size = 10) +
+  theme_bw(base_size = 15) +
   labs(x = "",
        y = "Log Odds Ratio (Born / Capture)",
-       title = "Comparing the odds ratio of words for cause of death \n  between Cetacean's captured from the ocean or born in captivity (reported)")
+       title = "Comparing the odds ratio of words for cause of death \n  between Cetacean's captured from the ocean or born in captivity (reported)",
+       caption = "Source: The Pudding")
 
 ```
 
