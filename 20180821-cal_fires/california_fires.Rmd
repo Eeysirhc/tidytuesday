@@ -10,7 +10,6 @@ source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-08-
 
 ```{r}
 # load packages and parse data
-
 library(tidyverse)
 library(scales)
 library(RColorBrewer)
