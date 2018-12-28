@@ -5,7 +5,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-Analyzing data for #tidytuesday week of 11/20/2018
+Analyzing data for #tidytuesday week of 11/27/2018
 
 source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2018-11-27
 
