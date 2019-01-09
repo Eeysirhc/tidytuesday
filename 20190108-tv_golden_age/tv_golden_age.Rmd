@@ -57,6 +57,19 @@ tv_data_summarized %>%
        caption = "Source: The Economist",
        title = "Average rating distribution for each cluster assignment") +
   scale_fill_brewer(palette = 'Paired')
+
+tv_data_summarized %>%
+  left_join(augment(kclust_results, kclust_data)) %>%
+  mutate(title = factor(title)) %>%
+  group_by(.cluster) %>%
+  ggplot(aes(avg_rating, log10(avg_share)+1, color = .cluster)) +
+  geom_point(alpha = 0.7, size = 3, show.legend = FALSE) +
+  theme_light() +
+    labs(x = "Average Rating",
+       y = "Share (log10)",
+       caption = "Source: The Economist",
+       title = "Relationship between Average Rating and Shares by cluster assignment") +
+  scale_fill_brewer(palette = 'Paired')
 ```
 
 ```{r}
