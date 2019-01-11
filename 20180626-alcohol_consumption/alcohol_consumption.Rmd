@@ -1,0 +1,77 @@
+---
+title: "#TidyTuesday: Alcohol Consumption"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Analyzing #tidytuesday dataset for week of 2018-06-28 (source)[https://github.com/rfordatascience/tidytuesday/blob/master/data/2018/2018-06-26/week13_alcohol_global.csv]
+
+```{r}
+# LOAD PACKAGES AND PARSE DATA
+library(tidyverse)
+library(RColorBrewer)
+
+alcohol_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-06-26/week13_alcohol_global.csv")
+alcohol <- alcohol_raw
+
+
+alcohol_parsed <- alcohol %>%
+  select(-total_litres_of_pure_alcohol) %>%
+  gather(key = 'type', value = 'servings', servings = beer_servings:wine_servings) %>%
+  mutate(type = str_replace(type, "_servings", ""),
+         type = str_to_title(type))
+```
+
+```{r}
+# TOP 20 COUNTRIES BY SERVINGS CONSUMED PER PERSON IN 2010 ?
+alcohol_parsed %>%
+  group_by(type) %>%
+  top_n(20, servings) %>%
+  ggplot() + 
+  geom_col(aes(reorder(country, servings), servings, fill = type),
+           alpha = 0.8,
+           show.legend = FALSE) + 
+  facet_wrap(~type, scales = "free") +
+  coord_flip() +
+  theme_light() +
+  scale_fill_brewer(palette = 'Dark2') +
+  labs(x = "",
+       y = "",
+       title = "Which countries drink the most Beer, Spirits and Wine?",
+       subtitle = "Top 20 by servings consumed per person",
+       caption = "Source: World Health Organization")
+```
+
+```{r}
+# WHAT IS THE DISTRIBUTION OF CONSUMPTION BY ALCOHOL TYPE ?
+alcohol_parsed %>%
+  ggplot() +
+  geom_density(aes(servings, fill = type), alpha = 0.3) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(x = "Servings Consumed Per Person",
+       y = "Density")
+
+alcohol_parsed %>%
+  filter(type > 0) %>%
+  ggplot() + 
+  stat_ecdf(aes(servings, color = type)) +
+  scale_y_continuous(labels = percent_format()) +
+  labs(x = "Servings Consumed per Person",
+       y = "Cumulative Distribtuion",
+       title = "75% of wine drinking countries have an average of 50 servings/person")
+```
+
+
+```{r}
+# DIFFERENCE BETWEEN BEER VS WINE DRINKING COUNTRIES
+
+alcohol %>%
+  select(country, beer_servings, wine_servings) %>%
+  group_by(country) %>%
+  filter(!beer_servings < 1, !wine_servings < 1) %>%
+  mutate(logratio = beer_servings / wine_servings) %>%
+  arrange(abs(logratio)) %>% View()
+
+```
+
