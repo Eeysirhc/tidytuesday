@@ -5,12 +5,14 @@ editor_options:
   chunk_output_type: console
 ---
 
-Analyzing #tidytuesday dataset for week of 2018-06-28 (source)[https://github.com/rfordatascience/tidytuesday/blob/master/data/2018/2018-06-26/week13_alcohol_global.csv]
+Analyzing #tidytuesday dataset for week of 2018-06-28 ([source](https://github.com/rfordatascience/tidytuesday/blob/master/data/2018/2018-06-26/week13_alcohol_global.csv))
 
 ```{r}
 # LOAD PACKAGES AND PARSE DATA
 library(tidyverse)
 library(RColorBrewer)
+library(broom)
+library(ggrepel)
 
 alcohol_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2018/2018-06-26/week13_alcohol_global.csv")
 alcohol <- alcohol_raw
@@ -50,28 +52,78 @@ alcohol_parsed %>%
   geom_density(aes(servings, fill = type), alpha = 0.3) +
   scale_y_continuous(labels = percent_format()) +
   labs(x = "Servings Consumed Per Person",
-       y = "Density")
+       y = "Density",
+       title = "Distribution density for the type of alcohol consumed",
+       subtitle = "Most wine drinking countries do not consume that much per person",
+       fill = "Type")
+```
 
+
+```{r}
+# ECDF 
 alcohol_parsed %>%
   filter(type > 0) %>%
   ggplot() + 
   stat_ecdf(aes(servings, color = type)) +
   scale_y_continuous(labels = percent_format()) +
   labs(x = "Servings Consumed per Person",
-       y = "Cumulative Distribtuion",
-       title = "75% of wine drinking countries have an average of 50 servings/person")
+       y = "",
+       title = "Cumulative distribution of servings consumed per person by alcohol type",
+       subtitle = "75% of Beer drinking countries consume 190 servings/person as opposed to 60 servings/person for Wine",
+       color = "Type")
+```
+
+```{r}
+# CLUSTER ANALYSIS TO PARTITION DIFFERENT TYPE OF ALCOHOL CONSUMPTION
+alcohol_countries <- alcohol %>%
+  filter(total_litres_of_pure_alcohol > 0)
+
+alcohol_clustdata <- alcohol_countries %>%
+  select(-country)
+
+kclust <- kmeans(alcohol_clustdata, center = 4)
+
+alcohol_countries %>%
+  left_join(augment(kclust, alcohol_clustdata)) %>%
+  arrange(desc(total_litres_of_pure_alcohol)) %>% 
+  gather(key = 'type', value = 'servings', servings = beer_servings:wine_servings) %>%
+  mutate(type = str_replace(type, "_servings", ""),
+         type = str_to_title(type)) %>%
+  ggplot() +
+  geom_text(aes(servings, total_litres_of_pure_alcohol, label = country, color = .cluster),
+           show.legend = FALSE) +
+  facet_grid(type ~ .) +
+  scale_color_brewer(palette = 'Dark2') +
+  labs(x = "Servings Consumed per Person",
+       y = "Total Liters of Pure Alochol",
+       title = "Cluster analysis by country for alcohol consumed per type") +
+  theme_bw()
+
 ```
 
 
 ```{r}
-# DIFFERENCE BETWEEN BEER VS WINE DRINKING COUNTRIES
+# BEER ONLY
+alcohol_countries %>%
+  left_join(augment(kclust, alcohol_clustdata)) %>%
+  arrange(desc(total_litres_of_pure_alcohol)) %>%
+  ggplot() +
+  geom_text(aes(beer_servings, total_litres_of_pure_alcohol, label = country, color = .cluster),
+            show.legend = FALSE) +
+  theme_bw() +
+    labs(x = "Servings Consumed per Person",
+       y = "Total Liters of Pure Alochol",
+       title = "Cluster analysis by country for alcohol consumed per type") +
+    scale_color_brewer(palette = 'Dark2') 
 
-alcohol %>%
-  select(country, beer_servings, wine_servings) %>%
-  group_by(country) %>%
-  filter(!beer_servings < 1, !wine_servings < 1) %>%
-  mutate(logratio = beer_servings / wine_servings) %>%
-  arrange(abs(logratio)) %>% View()
+```
+
+
+
+```{r}
+# DIFFERENCE OF ALCOHOL CONSUMPTION COMPARED TO THE US
+
+alcohol
 
 ```
 
