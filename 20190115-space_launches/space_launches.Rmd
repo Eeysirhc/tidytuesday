@@ -1,0 +1,125 @@
+---
+title: "TidyTuesday: Space Launches"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-01-15
+
+```{r}
+# LOAD PACKAGES AND PARSE DATA
+library(tidyverse)
+library(RColorBrewer)
+library(forcats)
+library(scales)
+library(ebbr)
+library(grid)
+
+launches_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-15/launches.csv")
+
+launches <- launches_raw %>%
+  filter(launch_year >= '1960')
+```
+
+### Top countries
+```{r}
+countries <- launches %>%
+  count(state_code, sort = TRUE) %>%
+  filter(n >= 10)
+```
+
+
+### Trophy for most space launches over time?
+```{r}
+launches %>%
+  inner_join(countries) %>%
+  mutate(state_code = ifelse(state_code == 'RU', 'Russia / Soviet Union',
+                             ifelse(state_code == 'SU', 'Russia / Soviet Union', state_code))) %>%
+  ggplot() + 
+  geom_freqpoly(aes(launch_year, color = state_code), alpha = 0.5, binwidth = 1, size = 1) +
+  theme_light() +
+  scale_color_brewer(palette = 'Set1')
+```
+
+
+### Are space launches more successful over time ?
+```{r}
+# IDENTIFY TOP COUNTRIES WITH MOST HISTORICAL LAUNCHES
+top_countries <- launches %>%
+  count(state_code, sort = TRUE) %>%
+  filter(n >= 50) %>%
+  select(state_code)
+
+# APPLY EMPIRICAL BAYESIAN STATS TO DATASET
+launches_parsed <- launches %>%
+  mutate(category = ifelse(category == 'O', 1, 0)) %>%
+  select(launch_year, type, state_code, category) %>%
+  group_by(launch_year, state_code) %>%
+  summarize(success = sum(category),
+         total = n(),
+         rate = success / total) %>%
+  inner_join(top_countries) %>%
+  # INCOMING NASTY IFELSE CODE (NEED TO REFACTOR)
+  mutate(state_code = ifelse(state_code == 'RU', 'Russia / Soviet Union',
+                             ifelse(state_code == 'SU', 'Russia / Soviet Union', 
+                                    ifelse(state_code == 'US', 'United States',
+                                           ifelse(state_code == 'CN', 'China',
+                                                  ifelse(state_code == 'IN', 'India',
+                                                         ifelse(state_code == 'F', 'France',
+                                                                ifelse(state_code == 'J', 'Japan', state_code)))))))) %>%
+  ungroup() %>%
+  add_ebb_estimate(success, total)
+
+# PLOT THE GRAPH
+launches_parsed %>%   
+  ggplot() +
+  geom_line(aes(launch_year, .fitted, color = state_code),
+            show.legend = FALSE,
+            size = 1) +
+  geom_ribbon(aes(x = launch_year, ymin = .low, ymax = .high, fill = state_code), 
+              alpha = 0.2,
+              show.legend = FALSE) +
+  theme_light() +
+  scale_y_continuous(labels = percent_format(round(1)),
+                     limits = c(0,1)) +
+  labs(x = "",
+       y = "",
+       title = "Success rate of space launches over time by country",
+       subtitle = "Empirical Bayes rate @ 95% confidence",
+       caption = "Source: The Economist") +
+  scale_fill_brewer(palette = 'Dark2') + 
+  scale_color_brewer(palette = 'Dark2') +
+  facet_wrap(~state_code)
+```
+
+### Who has a better success rate: private, startup or states ?
+```{r}
+launches %>%
+  mutate(category = ifelse(category == 'O', 1, 0)) %>%
+  select(launch_year, agency_type, category) %>%
+  group_by(launch_year, agency_type) %>%
+  summarize(success = sum(category),
+            total = n(),
+            rate = success / total) %>%
+  ungroup() %>%
+  add_ebb_estimate(success, total) %>%
+  ggplot() +
+  geom_line(aes(launch_year, .fitted, color = agency_type), 
+            size = 1) +
+  geom_ribbon(aes(x = launch_year, ymin = .low, ymax = .high, fill = agency_type),
+              alpha = 0.1) +
+  #facet_wrap(~agency_type) +
+  theme_light() +
+  scale_fill_brewer(palette = 'Set1') +
+  scale_color_brewer(palette = 'Set1') +
+  labs(x = "",
+       y = "",
+       caption = "Source: The Economist",
+       title = "Success rate of space launches over time by agency type",
+       subtitle = "Empirical Bayes rate @ 95% confidence",
+       color = "Agency Type",
+       fill = "Agency Type") +
+  scale_y_continuous(labels = percent_format(round(1)),
+                     limits = c(0,1))
+```
