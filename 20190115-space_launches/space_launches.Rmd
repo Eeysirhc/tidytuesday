@@ -22,26 +22,37 @@ launches <- launches_raw %>%
   filter(launch_year >= '1960')
 ```
 
-### Top countries
+### Trophy for most space launches over time?
 ```{r}
 countries <- launches %>%
   count(state_code, sort = TRUE) %>%
-  filter(n >= 10)
-```
+  filter(n >= 100)
 
-
-### Trophy for most space launches over time?
-```{r}
 launches %>%
   inner_join(countries) %>%
+  # INCOMING NASTY IFELSE CODE (NEED TO REFACTOR)
   mutate(state_code = ifelse(state_code == 'RU', 'Russia / Soviet Union',
-                             ifelse(state_code == 'SU', 'Russia / Soviet Union', state_code))) %>%
+                             ifelse(state_code == 'SU', 'Russia / Soviet Union', 
+                                    ifelse(state_code == 'US', 'United States',
+                                           ifelse(state_code == 'CN', 'China',
+                                                  ifelse(state_code == 'IN', 'India',
+                                                         ifelse(state_code == 'F', 'France',
+                                                                ifelse(state_code == 'J', 'Japan', state_code)))))))) %>%
   ggplot() + 
-  geom_freqpoly(aes(launch_year, color = state_code), alpha = 0.5, binwidth = 1, size = 1) +
+  geom_density(aes(launch_year, fill = state_code, color = state_code),
+               alpha = 0.2) +
   theme_light() +
-  scale_color_brewer(palette = 'Set1')
+  scale_color_brewer(palette = 'Set1') +
+  scale_fill_brewer(palette = 'Set1') +
+  labs(x = "",
+       y = "",
+       title = "Distribution of space launches over time by country",
+       subtitle = "Minimum of n=100",
+       caption = "Source: The Economist",
+       fill = "Country",
+       color = "Country") +
+  scale_y_continuous(labels = percent_format(round(1)))
 ```
-
 
 ### Are space launches more successful over time ?
 ```{r}
@@ -69,7 +80,7 @@ launches_parsed <- launches %>%
                                                          ifelse(state_code == 'F', 'France',
                                                                 ifelse(state_code == 'J', 'Japan', state_code)))))))) %>%
   ungroup() %>%
-  add_ebb_estimate(success, total)
+  add_ebb_estimate(success, total) 
 
 # PLOT THE GRAPH
 launches_parsed %>%   
@@ -104,12 +115,12 @@ launches %>%
             rate = success / total) %>%
   ungroup() %>%
   add_ebb_estimate(success, total) %>%
+  mutate(agency_type = str_to_title(agency_type)) %>%
   ggplot() +
   geom_line(aes(launch_year, .fitted, color = agency_type), 
             size = 1) +
   geom_ribbon(aes(x = launch_year, ymin = .low, ymax = .high, fill = agency_type),
               alpha = 0.1) +
-  #facet_wrap(~agency_type) +
   theme_light() +
   scale_fill_brewer(palette = 'Set1') +
   scale_color_brewer(palette = 'Set1') +
