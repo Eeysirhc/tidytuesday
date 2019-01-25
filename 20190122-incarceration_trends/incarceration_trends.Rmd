@@ -27,7 +27,7 @@ prison <- prison_raw
 ```{r}
 # PROCESS RAW DATA
 total <- prison %>%
-  filter(pop_category != 'Total' & pop_category != 'Male' & pop_category != 'Female') %>%
+  filter(pop_category != 'Total' & pop_category != 'Male' & pop_category != 'Female') %>% 
   select(county_name, urbanicity, pop_category, population, prison_population) %>%
   na.omit() %>% 
   group_by(county_name, urbanicity, pop_category) %>%
@@ -47,7 +47,7 @@ total %>%
   geom_point(aes(pct_population, pct_prisoner),
              alpha = 0.1, size = 2, color = 'grey') +
   geom_smooth(aes(pct_population, pct_prisoner, color = pop_category),
-              size = 1.5,
+              size = 1.2,
              se = FALSE) +
   theme_light(base_size = 15) +
   scale_y_continuous(labels = percent_format()) +
@@ -55,18 +55,18 @@ total %>%
   labs(x = "County Population",
        y = "Prisoner Population",
        color = "",
-       title = "Specific groups are incarcerated at a higher rate",
-       subtitle = "Compared to the proportion of their county population",
+       title = "Comparison of county to prison population by ethnicity from 1970 to 2016",
+       subtitle = "Specific groups are overrepresented in the prisoner population",
        caption = "Source: Vera Institute of Justice") +
   geom_abline(linetype = 'dashed') +
   scale_color_brewer(palette = 'Set1') +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         legend.position = 'top',
-        legend.background = element_rect(fill = 'gray94', 
-                                         size = 0.3, linetype = 'solid'))
+        panel.background = element_rect(fill = 'gray97',
+                                        color = 'gray97',
+                                        size = 0.5, linetype = 'solid'))
 ```
-
 
 
 ### Does urbanicity play a role ?
