@@ -1,0 +1,90 @@
+---
+title: "TidyTuesday: Incarceration Trends"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Analyzing data for #tidytuesday week of 1/22/2019 ([source](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-01-22))
+
+```{r}
+# LOAD PACKAGES AND PARSE DATA
+library(tidyverse)
+library(scales)
+library(lubridate)
+library(RColorBrewer)
+
+prison_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-01-22/prison_population.csv")
+
+# DELETE THIS LATER
+prison %>% 
+  write_csv("prison_population.csv")
+
+prison <- prison_raw
+```
+
+
+```{r}
+# PROCESS RAW DATA
+total <- prison %>%
+  filter(pop_category != 'Total' & pop_category != 'Male' & pop_category != 'Female') %>%
+  select(county_name, urbanicity, pop_category, population, prison_population) %>%
+  na.omit() %>% 
+  group_by(county_name, urbanicity, pop_category) %>%
+  summarize(population = sum(population),
+            prison_population = sum(prison_population)) %>%
+  ungroup() %>%
+  group_by(county_name, urbanicity) %>%
+  mutate(pct_population = population / sum(population),
+         pct_prisoner = prison_population / sum(prison_population))
+```
+
+### What is the proportion of population:prisoners per demographic ?
+```{r}
+total %>%
+  filter(pop_category != 'Other') %>%
+  ggplot() + 
+  geom_point(aes(pct_population, pct_prisoner),
+             alpha = 0.1, size = 2, color = 'grey') +
+  geom_smooth(aes(pct_population, pct_prisoner, color = pop_category),
+              size = 1.5,
+             se = FALSE) +
+  theme_light(base_size = 15) +
+  scale_y_continuous(labels = percent_format()) +
+  scale_x_continuous(labels = percent_format()) +
+  labs(x = "County Population",
+       y = "Prisoner Population",
+       color = "",
+       title = "Specific groups are incarcerated at a higher rate",
+       subtitle = "Compared to the proportion of their county population",
+       caption = "Source: Vera Institute of Justice") +
+  geom_abline(linetype = 'dashed') +
+  scale_color_brewer(palette = 'Set1') +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        legend.position = 'top',
+        legend.background = element_rect(fill = 'gray94', 
+                                         size = 0.3, linetype = 'solid'))
+```
+
+
+
+### Does urbanicity play a role ?
+Answer: variations between different races but long answer short...not really.
+```{r}
+total %>%
+  filter(pop_category != 'Other') %>%
+  ggplot() + 
+  geom_point(aes(pct_population, pct_prisoner),
+             alpha = 0.1, size = 2, color = 'grey') +
+  geom_smooth(aes(pct_population, pct_prisoner, color = urbanicity),
+              se = FALSE) +
+  theme_light() +
+  scale_y_continuous(labels = percent_format()) +
+  scale_x_continuous(labels = percent_format()) +
+  labs(x = "County Population (%)",
+       y = "Prisoner Population (%)",
+       color = "Urbanicity") +
+  facet_wrap(~pop_category) +
+  geom_abline(linetype = 'dashed')
+```
