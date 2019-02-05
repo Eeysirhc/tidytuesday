@@ -29,7 +29,7 @@ mortgage_rates %>%
 ```{r}
 state_hpi %>%
   mutate(diff = price_index - us_avg) %>% 
-  #filter(state == 'CA') %>%
+  filter(state == 'CA') %>%
   group_by(year, state) %>%
   summarize(us_avg = mean(us_avg),
             price_index = mean(price_index),
@@ -39,6 +39,41 @@ state_hpi %>%
   geom_col(aes(year, diff_avg, fill = segment)) +
   geom_hline(yintercept = 0, lty = 'dashed') +
   scale_fill_brewer(palette = 'Set1', direction = -1) +
+  transition_states(year, transition_length = 2, state_length = 1)
+```
+
+
+```{r}
+# identify states with highest diff_avg
+highest_diff <- state_hpi %>%
+  mutate(diff = price_index - us_avg) %>% 
+  group_by(year, state) %>%
+  summarize(us_avg = mean(us_avg),
+            price_index = mean(price_index),
+            diff_avg = mean(diff)) %>%
+  mutate(segment = ifelse(diff_avg > 0, 'above', 'below')) %>%
+  filter(state != 'DC') %>%
+  slice(which.max(diff_avg)) %>%
+  ungroup()
+
+# identify states with lowest diff_avg
+lowest_diff <- state_hpi %>%
+  mutate(diff = price_index - us_avg) %>% 
+  group_by(year, state) %>%
+  summarize(us_avg = mean(us_avg),
+            price_index = mean(price_index),
+            diff_avg = mean(diff)) %>%
+  mutate(segment = ifelse(diff_avg > 0, 'above', 'below')) %>%
+  filter(state != 'DC') %>%
+  slice(which.min(diff_avg)) %>%
+  ungroup()
+
+total <- rbind(highest_diff, lowest_diff)
+
+
+total %>% 
+  ggplot() +
+  geom_col(aes(year, diff_avg, fill = state)) +
   transition_reveal(year)
 ```
 
