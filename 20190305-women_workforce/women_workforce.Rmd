@@ -30,14 +30,14 @@ jobs_gender %>%
               alpha = 0.5, 
               size = 2.5) +
   geom_hline(yintercept = 0, color = 'grey54', lty = 'dashed') +
-  facet_wrap(~major_category, scales = 'free_x') +
+  facet_wrap(~major_category) +
   scale_x_continuous(labels = dollar_format(),
                      limits = c(0,200000)) +
   scale_y_continuous(labels = percent_format(round(1)),
                      limits = c(-0.3,0.3)) +
   labs(x = "Average Median Earnings",
        y = "Difference from Average",
-       caption = "Author: @eeysirhc\nSource: Bureau of Labor Statistics",
+       caption = "Graphic: @eeysirhc\nSource: Bureau of Labor Statistics",
        title = "2016 Earnings Differences (Weighted) by Job Sector",
        subtitle = "Blue = Male; Red = Female") +
   theme_bw(base_size = 15) +
