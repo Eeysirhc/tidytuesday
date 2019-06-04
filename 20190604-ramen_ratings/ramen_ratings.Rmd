@@ -1,0 +1,39 @@
+---
+title: "TidyTuesday: Ramen Ratings"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Data from #tidytuesday week of 2019-06-04 ([source](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-06-04))
+
+### Load R packages
+```{r results='hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+library(plotly)
+```
+
+### Download and parse data frame
+```{r results='hide', message=FALSE, warning=FALSE}
+ramen_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-04/ramen_ratings.csv")
+
+ramen <- ramen_raw %>% 
+  group_by(brand, country) %>% 
+  summarize(avg_rating = round(mean(stars),2),
+            total_reviews = n()) 
+```
+
+### Build plotly chart
+```{r message=FALSE, warning=FALSE}
+plot_ly(data = ramen, 
+        x = ~total_reviews, 
+        y = ~avg_rating, 
+        size = 15,
+        color = ~country,
+        colors = 'Paired', 
+        text = ~paste("Brand: ", brand, 
+                      "<br>Average Rating: ", avg_rating),
+        showlegend = FALSE) %>% 
+  layout(xaxis = list(title = "Total Reviews"),
+         yaxis = list(title = "Average Ratings"))
+```
