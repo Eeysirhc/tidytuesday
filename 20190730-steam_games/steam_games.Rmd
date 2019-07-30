@@ -1,0 +1,68 @@
+
+---
+title: "TidyTuesday: Steam Games"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Data from #tidytuesday week of 2019-07-30 ([source](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-07-30))
+
+```{r}
+library(tidyverse)
+library(RColorBrewer)
+library(scales)
+
+steam_raw <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-07-30/video_games.csv") 
+```
+
+```{r}
+steam_games <- steam_raw %>% 
+  
+  # VARIABLE FOR AGE OF GAME
+  mutate(release_year = substring(release_date, 8, 12), # EXTRACT YEAR
+         release_year = as.numeric(str_trim(release_year)), 
+         release_year = case_when(release_year == 5 ~ 2015, # INCORRECT DATA POINT
+                          TRUE ~ release_year),
+         age = 2019 - release_year) %>% 
+  
+  # VARIABLE FOR MIN/MAX NUMBER OF OWNERS
+  mutate(max_owners = str_trim(word(owners, 2, sep = "\\..")),
+         max_owners = as.numeric(str_replace_all(max_owners, ",", "")),
+         min_owners = str_trim(word(owners, 1, sep = "\\..")),
+         min_owners = as.numeric(str_replace_all(min_owners, ",", ""))) %>% 
+  
+  # REMOVE VALUES WITH INCONSISTENT RELEASE_DATE FORMAT (n=37)
+  filter(age < 15) %>% 
+  
+  # FILTER OUT STUDIO SOFTWARE
+  filter(price < 150)
+```
+
+# What is the distrubtion of game ownership for the top publishers ?
+```{r}
+steam_games %>% 
+  select(-number, -release_date) %>% 
+  mutate(max_owners = as.factor(max_owners / 1000000)) %>% 
+  group_by(publisher) %>% 
+  mutate(n = n()) %>% 
+  ungroup() %>% 
+  filter(n >= 80, publisher != 'NA') %>%
+  mutate(publisher = paste0(publisher, " (", n, ")"),
+         publisher = reorder(publisher, n)) %>% 
+  ggplot(aes(publisher, max_owners, color = publisher)) +
+  geom_jitter(show.legend = FALSE, size = 4, alpha = 0.5) +
+  scale_color_brewer(palette = 'RdBu') +
+  coord_flip() +
+  theme_light(base_size = 15) +
+  labs(x = NULL,
+       y = "Estimated Game Ownership per Million",
+       title = "Distribution of game ownership for publishers with more than 80 titles",
+       subtitle = "A few companies focus on niche audiences with low mass market appeal",
+       caption = "by: @eeysirhc\nsource: Steam Spy") +
+  theme(panel.background = element_rect(fill = 'grey95'),
+        plot.background = element_rect(fill = 'grey95'),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
