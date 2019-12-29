@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+
+source: https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-12-17
+
+
+# Load packages
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(reticulate)
+```
+
+
+# R then Python
+
+## Grab and parse data
+```{r warning=FALSE, message=FALSE}
+df_rdata <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_moves.csv")
+
+df_rdata <- df_rdata %>% 
+  filter(inUS == 'TRUE') %>%
+  select(location, total)
+
+df_rdata %>% head()
+```
+
+## Plot data
+```{python warning=FALSE, message=FALSE}
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# note the r. before the df_rdata value
+fig = sns.barplot(x="total", y="location", data=r.df_rdata, orient="h")
+
+plt.xlabel("Adoptable Dogs Available")
+plt.ylabel("")
+plt.figtext(0.9, 0.03, "by: @eeysirhc", horizontalalignment="right")
+plt.figtext(0.9, 0.01, "source: The Pudding", horizontalalignment="right")
+plt.show(fig)
+```
+
+
+# Python then R
+
+## Grab and parse data
+```{python warning=FALSE, message=FALSE}
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+df_pydata = pd.read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-12-17/dog_moves.csv", sep=',', error_bad_lines=False, index_col=False, dtype='unicode')
+
+df_pydata = df_pydata[df_pydata['inUS']=='TRUE']
+df_pydata = df_pydata[['location', 'total']]
+df_pydata.total = pd.to_numeric(df_pydata.total)
+
+df_pydata.head()
+```
+
+## Plot data
+```{r warning=FALSE, message=FALSE}
+# note the py$ before the df_pydata
+py$df_pydata %>% 
+  ggplot(aes(location, total, fill = location)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(labels = scales::comma_format()) +
+  labs(x = NULL, y = "Adoptable Dogs Available", caption = "by: @eeysirhc\nsource: The Pudding") +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+
